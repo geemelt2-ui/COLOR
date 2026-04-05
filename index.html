@@ -79,5 +79,60 @@
 
     <script src="data.js"></script>
     <script src="app.js"></script>
+    <script type="module">
+  // 1. ייבוא הכלים הדרושים
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+  // 2.<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAA8w4R22QD0J8kiKR4ta7XbxjCUdx0aEk",
+    authDomain: "color-cubes-f3f0c.firebaseapp.com",
+    projectId: "color-cubes-f3f0c",
+    storageBucket: "color-cubes-f3f0c.firebasestorage.app",
+    messagingSenderId: "51067026903",
+    appId: "1:51067026903:web:1b23470acbf6ab8a755f92",
+    measurementId: "G-7FLL9VVFVB"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+  const firebaseConfig = {
+    apiKey: "AIzaSy...", 
+    authDomain: "color-cubes...",
+    projectId: "color-cubes...",
+    storageBucket: "color-cubes...",
+    messagingSenderId: "...",
+    appId: "...",
+    measurementId: "..."
+  };
+
+  // 3. הפעלת המערכת
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 4. פונקציה פשוטה ששומרת "צבע" לדוגמה (כדי לבדוק שזה עובד)
+  window.saveToFirebase = async function(data) {
+    try {
+      const docRef = await addDoc(collection(db, "my_data"), {
+        content: data,
+        timestamp: new Date()
+      });
+      alert("הנתונים נשמרו בהצלחה בענן!");
+    } catch (e) {
+      console.error("שגיאה בשמירה: ", e);
+    }
+  }
+</script>
 </body>
 </html>
