@@ -29,8 +29,9 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
+    height: 100vh;
+    overflow: hidden;
+    padding: 10px;
     direction: rtl;
 }
 
@@ -41,32 +42,36 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header */
 header {
     background: linear-gradient(135deg, var(--dark) 0%, #3D4E6F 100%);
     color: white;
-    padding: 30px;
+    padding: 12px 30px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 header h1 {
-    font-size: 2.5em;
-    margin-bottom: 20px;
+    font-size: 1.6em;
+    margin-bottom: 8px;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .stat {
     background: rgba(255,255,255,0.1);
-    padding: 15px;
+    padding: 8px 12px;
     border-radius: 10px;
     backdrop-filter: blur(10px);
 }
@@ -80,7 +85,7 @@ header h1 {
 
 .stat-value {
     display: block;
-    font-size: 1.8em;
+    font-size: 1.4em;
     font-weight: bold;
 }
 
@@ -106,7 +111,12 @@ header h1 {
 
 /* Main Content */
 main {
-    padding: 30px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 20px;
 }
 
 /* Filters */
@@ -114,8 +124,9 @@ main {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    margin-bottom: 8px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .filter-btn {
@@ -162,7 +173,8 @@ main {
 .view-toggle {
     display: flex;
     gap: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
 }
 
 .view-btn {
@@ -185,17 +197,17 @@ main {
     border-color: var(--primary);
 }
 
-/* Grid View - scrollable map container */
+/* Grid View - zoomed to fit window */
 .cubes-grid {
-    display: block;
-    overflow-x: auto;
-    overflow-y: auto;
-    margin-bottom: 30px;
-    padding-bottom: 10px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
     background: #f8f9fa;
     border-radius: 10px;
     border: 1px solid var(--border);
-    max-height: 75vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Inner positioned map */
@@ -280,6 +292,9 @@ main {
 
 /* List View */
 .cubes-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -318,6 +333,19 @@ main {
     display: flex;
     gap: 5px;
     flex-wrap: wrap;
+}
+
+.list-faces {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.list-face-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
 }
 
 .list-status {
@@ -582,7 +610,7 @@ main {
     }
 
     .cubes-grid {
-        max-height: 60vh;
+        min-height: 0;
     }
 }
 

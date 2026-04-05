@@ -46,6 +46,7 @@ class CubeTracker {
     }
 
     saveToStorage() {
+        if (this._loading) return;
         const data = {
             completedCubes: Array.from(this.completedCubes),
             cubNotes: this.cubNotes,
@@ -62,8 +63,10 @@ class CubeTracker {
 
     // Initialize
     async init() {
+        this._loading = true;
         this.setupEventListeners();
         await this.loadFromStorage();
+        this._loading = false;
         this.render();
         this.updateStats();
     }
@@ -105,6 +108,11 @@ class CubeTracker {
                 this.closeModal();
             }
         });
+
+        // Re-fit grid on window resize
+        window.addEventListener('resize', () => {
+            if (this.currentView === 'grid') this.fitGrid();
+        });
     }
 
     handleFilter(e) {
@@ -119,7 +127,7 @@ class CubeTracker {
         e.target.classList.add('active');
         this.currentView = e.target.dataset.view;
 
-        document.getElementById('gridView').style.display = this.currentView === 'grid' ? 'block' : 'none';
+        document.getElementById('gridView').style.display = this.currentView === 'grid' ? 'flex' : 'none';
         document.getElementById('listView').style.display = this.currentView === 'list' ? 'flex' : 'none';
 
         this.render();
@@ -168,6 +176,23 @@ class CubeTracker {
         });
 
         gridView.appendChild(mapContainer);
+        requestAnimationFrame(() => this.fitGrid());
+    }
+
+    fitGrid() {
+        const gridView = document.getElementById('gridView');
+        const map = gridView.querySelector('.cube-map');
+        if (!map) return;
+
+        map.style.zoom = '';
+        const naturalW = map.offsetWidth;
+        const naturalH = map.offsetHeight;
+        if (!naturalW || !naturalH) return;
+
+        const availW = gridView.clientWidth - 8;
+        const availH = gridView.clientHeight - 8;
+        const zoom = Math.min(availW / naturalW, availH / naturalH, 1);
+        map.style.zoom = zoom;
     }
 
     renderList() {
@@ -328,28 +353,27 @@ class CubeTracker {
 
     createListItem(id, cube) {
         const item = document.createElement('div');
-        const isCompleted = this.completedCubes.has(parseInt(id));
+        const isCompleted = this.completedCubes.has(parseInt(id)) || this.completedCubes.has(id);
         item.className = `list-item ${isCompleted ? 'completed' : ''}`;
 
         const colors = cube.colors || [];
-        let colorsHtml = '<div class="list-colors">';
-        if (colors.length > 0) {
-            colorsHtml += colors.map(colorId =>
-                `<div class="color-dot" style="background-color: ${COLOR_PALETTE[colorId].hex}; width: 14px; height: 14px;"></div>`
-            ).join('');
-        } else {
-            colorsHtml += '<span style="font-size: 0.8em; opacity: 0.6;">טבעי</span>';
-        }
-        colorsHtml += '</div>';
-
         const colorNames = colors.map(cid => COLOR_PALETTE[cid].name).join(', ') || 'טבעי';
-        const status = isCompleted ? '✓ הושלם' : '⏳ בחיתת';
+
+        // Face colors the user picked (top, right, bottom, left)
+        const facets = this.faceColors[id] || {};
+        const faceDotsHtml = ['top', 'right', 'bottom', 'left'].map(side => {
+            const cid = facets[side];
+            const bg = cid != null ? COLOR_PALETTE[cid].hex : '#e0e0e0';
+            return `<div class="list-face-dot" title="${side}" style="background:${bg}"></div>`;
+        }).join('');
+
+        const status = isCompleted ? '✓ הושלם' : '⏳ בתהליך';
         const statusClass = isCompleted ? 'completed' : 'pending';
 
         item.innerHTML = `
             <div class="list-number">${id}</div>
             <div>${colorNames}</div>
-            ${colorsHtml}
+            <div class="list-faces">${faceDotsHtml}</div>
             <div class="list-status ${statusClass}">${status}</div>
         `;
 
