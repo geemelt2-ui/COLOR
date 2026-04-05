@@ -15,18 +15,33 @@ class CubeTracker {
         this.currentView = 'grid';
         this.searchTerm = '';
 
-        this.loadFromStorage();
         this.init();
     }
 
     // Storage Management
-    loadFromStorage() {
-        const saved = localStorage.getItem('cubeTrackerData');
-        if (saved) {
-            const data = JSON.parse(saved);
-            this.completedCubes = new Set(data.completedCubes);
+    async loadFromStorage() {
+        // Load localStorage for instant display
+        const cached = localStorage.getItem('cubeTrackerData');
+        if (cached) {
+            const data = JSON.parse(cached);
+            this.completedCubes = new Set(data.completedCubes || []);
             this.cubNotes = data.cubNotes || {};
             this.faceColors = data.faceColors || {};
+        }
+
+        // Load from Firestore (authoritative source for cross-device sync)
+        const fs = window.__firestore;
+        if (!fs) return;
+        try {
+            const snap = await fs.getDoc(fs.doc(fs.db, 'cubeTracker', 'data'));
+            if (snap.exists()) {
+                const data = snap.data();
+                this.completedCubes = new Set(data.completedCubes || []);
+                this.cubNotes = data.cubNotes || {};
+                this.faceColors = data.faceColors || {};
+            }
+        } catch (e) {
+            console.warn('Firestore load failed, using localStorage:', e);
         }
     }
 
@@ -37,11 +52,18 @@ class CubeTracker {
             faceColors: this.faceColors
         };
         localStorage.setItem('cubeTrackerData', JSON.stringify(data));
+
+        const fs = window.__firestore;
+        if (fs) {
+            fs.setDoc(fs.doc(fs.db, 'cubeTracker', 'data'), data)
+              .catch(e => console.error('Firestore save failed:', e));
+        }
     }
 
     // Initialize
-    init() {
+    async init() {
         this.setupEventListeners();
+        await this.loadFromStorage();
         this.render();
         this.updateStats();
     }
@@ -405,7 +427,4 @@ class CubeTracker {
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    window.tracker = new CubeTracker();
-});
+// CubeTracker is initialized by the Firebase module script in index.html
