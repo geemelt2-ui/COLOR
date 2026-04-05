@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת מעקב צביעת קוביות</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 מערכת מעקב צביעת קוביות</h1>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">סה"כ קוביות:</span>
+                    <span class="stat-value" id="totalCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">הושלמו:</span>
+                    <span class="stat-value completed" id="completedCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">בתהליך:</span>
+                    <span class="stat-value" id="remainCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">התקדמות:</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">הכל</button>
+                <button class="filter-btn" data-filter="pending">בחיתת</button>
+                <button class="filter-btn" data-filter="completed">הושלמו</button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="חפש קובייה...">
+                </div>
+            </div>
+
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="grid">📊 גריד</button>
+                <button class="view-btn" data-view="list">📝 רשימה</button>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="cubes-grid">
+                <!-- יוולד דינמית ב-app.js -->
+            </div>
+
+            <!-- List View -->
+            <div id="listView" class="cubes-list" style="display: none;">
+                <!-- יוללד דינמית ב-app.js -->
+            </div>
+        </main>
+
+        <!-- Modal לפרטי קובייה -->
+        <div id="cubeModal" class="modal">
+            <div class="modal-content">
+                <button class="close-btn">&times;</button>
+                <div class="cube-detail">
+                    <h2>קובייה <span id="cubeNumber"></span></h2>
+                    <div class="cube-faces">
+                        <!-- יוושקמו דינמית -->
+                    </div>
+                    <div class="cube-actions">
+                        <button class="btn btn-primary" id="markCompleteBtn">סימן כהושלם</button>
+                        <button class="btn btn-secondary" id="clearBtn">ביטול סימון</button>
+                    </div>
+                    <textarea id="cubeNotes" placeholder="הערות..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
