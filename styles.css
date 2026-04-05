@@ -17,7 +17,7 @@
     --color-10: #5ab2e4;
     --color-11: #90cb84;
     --color-12: #685040;
-    
+
     --primary: #2C3E50;
     --success: #27AE60;
     --danger: #E74C3C;
@@ -324,13 +324,8 @@ main {
     font-weight: bold;
 }
 
-.list-status.pending {
-    color: var(--danger);
-}
-
-.list-status.completed {
-    color: var(--success);
-}
+.list-status.pending  { color: var(--danger); }
+.list-status.completed { color: var(--success); }
 
 /* Modal */
 .modal {
@@ -347,7 +342,7 @@ main {
 
 @keyframes fadeIn {
     from { opacity: 0; }
-    to { opacity: 1; }
+    to   { opacity: 1; }
 }
 
 .modal.show {
@@ -395,6 +390,7 @@ main {
     color: var(--primary);
 }
 
+/* Cube faces container in modal */
 .cube-faces {
     margin: 15px 0;
     display: flex;
@@ -455,7 +451,7 @@ main {
     font-style: italic;
 }
 
-/* ── Face color selector rows ── */
+/* Face color selector rows */
 .face-selectors {
     width: 100%;
     margin-top: 14px;
@@ -486,7 +482,9 @@ main {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 2px;
+    scrollbar-width: none;
 }
+.face-swatches::-webkit-scrollbar { display: none; }
 
 .color-swatch {
     width: 26px;
