@@ -44,13 +44,26 @@
 
             <div class="view-toggle">
                 <button class="view-btn active" data-view="grid">📊 גריד</button>
+                <button class="view-btn" data-view="3d">🎲 תלת-מימד</button>
                 <button class="view-btn" data-view="list">📝 רשימה</button>
+            </div>
+
+            <div class="direction-toggle" id="directionToggle">
+                <span style="font-size:0.85em;color:#666">צפייה מ:</span>
+                <button class="direction-btn active" data-dir="front">קדמי</button>
+                <button class="direction-btn" data-dir="top">למעלה ⬆</button>
+                <button class="direction-btn" data-dir="right">ימין ←</button>
+                <button class="direction-btn" data-dir="bottom">למטה ⬇</button>
+                <button class="direction-btn" data-dir="left">שמאל →</button>
             </div>
 
             <!-- Grid View -->
             <div id="gridView" class="cubes-grid">
                 <!-- יוולד דינמית ב-app.js -->
             </div>
+
+            <!-- 3D View -->
+            <div id="view3D" class="view3d-container" style="display:none"></div>
 
             <!-- List View -->
             <div id="listView" class="cubes-list" style="display: none;">

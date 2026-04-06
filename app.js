@@ -10,10 +10,15 @@ class CubeTracker {
         this.cubes = CUBE_GRID;
         this.completedCubes = new Set();
         this.cubNotes = {};
-        this.faceColors = {};   // { cubeId: { top, right, bottom, left } } – user picks
+        this.faceColors = {};    // { cubeId: { top, right, bottom, left } } – user picks
+        this.paintedFaces = {}; // { cubeId: { front, back, top, right, bottom, left } } – painted tracking
         this.currentFilter = 'all';
         this.currentView = 'grid';
+        this.currentDirection = 'front';
         this.searchTerm = '';
+        this.rot3X = -20;
+        this.rot3Y = 15;
+        this._drag3d = null;
 
         this.init();
     }
@@ -27,6 +32,7 @@ class CubeTracker {
             this.completedCubes = new Set(data.completedCubes || []);
             this.cubNotes = data.cubNotes || {};
             this.faceColors = data.faceColors || {};
+            this.paintedFaces = data.paintedFaces || {};
         }
 
         // Load from Firestore (authoritative source for cross-device sync)
@@ -39,6 +45,7 @@ class CubeTracker {
                 this.completedCubes = new Set(data.completedCubes || []);
                 this.cubNotes = data.cubNotes || {};
                 this.faceColors = data.faceColors || {};
+                this.paintedFaces = data.paintedFaces || {};
             }
         } catch (e) {
             console.warn('Firestore load failed, using localStorage:', e);
@@ -50,7 +57,8 @@ class CubeTracker {
         const data = {
             completedCubes: Array.from(this.completedCubes),
             cubNotes: this.cubNotes,
-            faceColors: this.faceColors
+            faceColors: this.faceColors,
+            paintedFaces: this.paintedFaces
         };
         localStorage.setItem('cubeTrackerData', JSON.stringify(data));
 
@@ -109,6 +117,11 @@ class CubeTracker {
             }
         });
 
+        // Direction toggle buttons
+        document.querySelectorAll('.direction-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleDirectionChange(e));
+        });
+
         // Re-fit grid on window resize
         window.addEventListener('resize', () => {
             if (this.currentView === 'grid') this.fitGrid();
@@ -127,10 +140,19 @@ class CubeTracker {
         e.target.classList.add('active');
         this.currentView = e.target.dataset.view;
 
-        document.getElementById('gridView').style.display = this.currentView === 'grid' ? 'flex' : 'none';
-        document.getElementById('listView').style.display = this.currentView === 'list' ? 'flex' : 'none';
+        document.getElementById('gridView').style.display        = this.currentView === 'grid' ? 'flex'  : 'none';
+        document.getElementById('view3D').style.display          = this.currentView === '3d'   ? 'flex'  : 'none';
+        document.getElementById('listView').style.display        = this.currentView === 'list' ? 'flex'  : 'none';
+        document.getElementById('directionToggle').style.display = this.currentView === 'grid' ? 'flex'  : 'none';
 
         this.render();
+    }
+
+    handleDirectionChange(e) {
+        document.querySelectorAll('.direction-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        this.currentDirection = e.target.dataset.dir;
+        this.renderGrid();
     }
 
     // Filtering logic
@@ -152,7 +174,9 @@ class CubeTracker {
 
     // Rendering
     render() {
-        this.currentView === 'grid' ? this.renderGrid() : this.renderList();
+        if (this.currentView === 'grid')     this.renderGrid();
+        else if (this.currentView === '3d')  this.render3D();
+        else                                 this.renderList();
         this.updateStats();
     }
 
@@ -205,6 +229,109 @@ class CubeTracker {
         });
     }
 
+    // ── 3D View ──────────────────────────────────────────────────────────────
+
+    render3D() {
+        const container = document.getElementById('view3D');
+        container.innerHTML = '';
+
+        const cols = GRID_MAX_COL - GRID_MIN_COL + 1;
+        const rows = GRID_MAX_ROW - GRID_MIN_ROW + 1;
+
+        const world = document.createElement('div');
+        world.className = 'world3d';
+        world.style.width  = (cols * CELL_SIZE) + 'px';
+        world.style.height = (rows * CELL_SIZE) + 'px';
+
+        Object.entries(this.cubes).forEach(([id, cube]) => {
+            const el = this.createCube3D(id, cube);
+            el.style.left = ((cube.col - GRID_MIN_COL) * CELL_SIZE) + 'px';
+            el.style.top  = ((cube.row - GRID_MIN_ROW) * CELL_SIZE) + 'px';
+            world.appendChild(el);
+        });
+
+        container.appendChild(world);
+        this.setup3DDrag(container, world);
+        requestAnimationFrame(() => this.apply3DTransform(world));
+    }
+
+    createCube3D(id, cube) {
+        const el = document.createElement('div');
+        el.className = 'cube3d';
+
+        const facets = this.faceColors[id] || {};
+        const frontColor = COLOR_PALETTE[cube.front]?.hex || '#909090';
+
+        const faces = {
+            front:  frontColor,
+            back:   '#444444',
+            top:    facets.top    != null ? COLOR_PALETTE[facets.top].hex    : frontColor,
+            bottom: facets.bottom != null ? COLOR_PALETTE[facets.bottom].hex : frontColor,
+            right:  facets.right  != null ? COLOR_PALETTE[facets.right].hex  : frontColor,
+            left:   facets.left   != null ? COLOR_PALETTE[facets.left].hex   : frontColor,
+        };
+
+        const lightColors = new Set([0, 1, 8, 10, 11]);
+        const textColor = lightColors.has(cube.front) ? 'rgba(0,0,0,0.75)' : 'white';
+
+        for (const [side, color] of Object.entries(faces)) {
+            const face = document.createElement('div');
+            face.className = `face face-${side}`;
+            face.style.background = color;
+            if (side === 'front') {
+                const label = document.createElement('span');
+                label.className = 'cube3d-label';
+                label.textContent = id;
+                label.style.color = textColor;
+                face.appendChild(label);
+            }
+            el.appendChild(face);
+        }
+        return el;
+    }
+
+    apply3DTransform(world) {
+        const container = document.getElementById('view3D');
+        if (!container || !world) return;
+        const naturalW = world.offsetWidth  || (36 * CELL_SIZE);
+        const naturalH = world.offsetHeight || (25 * CELL_SIZE);
+        const availW = container.clientWidth  - 80;
+        const availH = container.clientHeight - 80;
+        const scale = Math.min(availW / naturalW, availH / naturalH, 0.9);
+        world.style.transform =
+            `rotateX(${this.rot3X}deg) rotateY(${this.rot3Y}deg) scale3d(${scale},${scale},${scale})`;
+    }
+
+    setup3DDrag(container, world) {
+        // Remove old listeners by cloning
+        const fresh = container.cloneNode(false);
+        container.parentNode.replaceChild(fresh, container);
+        // Re-append world
+        fresh.appendChild(world);
+
+        const SENS = 0.4;
+
+        fresh.addEventListener('mousedown', e => {
+            this._drag3d = {
+                startX: e.clientX, startY: e.clientY,
+                startRotX: this.rot3X, startRotY: this.rot3Y
+            };
+        });
+        const onMove = e => {
+            if (!this._drag3d) return;
+            const dx = e.clientX - this._drag3d.startX;
+            const dy = e.clientY - this._drag3d.startY;
+            this.rot3X = Math.max(-85, Math.min(85, this._drag3d.startRotX - dy * SENS));
+            this.rot3Y = this._drag3d.startRotY + dx * SENS;
+            this.apply3DTransform(world);
+        };
+        const onUp = () => { this._drag3d = null; };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup',   onUp);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Build the background style for a cube tile
     buildBackground(colors) {
         if (!colors || colors.length === 0) return '#D0D0D0';
@@ -223,58 +350,126 @@ class CubeTracker {
         const isCompleted = this.completedCubes.has(parseInt(id));
         card.className = `cube-card ${isCompleted ? 'completed' : 'pending'}`;
 
-        const frontPalette = COLOR_PALETTE[cube.front] || COLOR_PALETTE[0];
         const lightColors = new Set([0, 1, 8, 10, 11]);
-        const textColor = lightColors.has(cube.front) ? 'rgba(0,0,0,0.75)' : 'white';
         const facets = this.faceColors[id] || {};
+        const paintedData = this.paintedFaces[id] || {};
 
-        const facetHtml = ['top', 'right', 'bottom', 'left'].map(side => {
-            const cid = facets[side];
-            const bg = cid != null ? `style="background:${COLOR_PALETTE[cid]?.hex}"` : '';
-            return `<div class="cube-facet-${side}" ${bg}></div>`;
-        }).join('');
+        if (this.currentDirection !== 'front') {
+            // Direction view: fill entire tile with the face color
+            const dir = this.currentDirection;
+            const dirColorId = facets[dir];
+            const bgColor = dirColorId != null ? COLOR_PALETTE[dirColorId].hex : '#d0d0d0';
+            const textColor = dirColorId != null && !lightColors.has(dirColorId) ? 'white' : 'rgba(0,0,0,0.6)';
+            card.style.background = bgColor;
+            if (paintedData[dir]) card.style.filter = 'brightness(0.48)';
+            card.innerHTML = `
+                <div class="cube-face-inner" style="background:transparent">
+                    ${isCompleted ? '<span class="cube-check">✓</span>' : ''}
+                    <span class="cube-number" style="color:${textColor}">${id}</span>
+                </div>
+            `;
+        } else {
+            // Front view: normal display with facet strips
+            const frontPalette = COLOR_PALETTE[cube.front] || COLOR_PALETTE[0];
+            const textColor = lightColors.has(cube.front) ? 'rgba(0,0,0,0.75)' : 'white';
 
-        card.innerHTML = `
-            ${facetHtml}
-            <div class="cube-face-inner" style="background:${frontPalette.hex}">
-                ${isCompleted ? '<span class="cube-check">✓</span>' : ''}
-                <span class="cube-number" style="color:${textColor}">${id}</span>
-            </div>
-        `;
+            const facetHtml = ['top', 'right', 'bottom', 'left'].map(side => {
+                const cid = facets[side];
+                let styleStr = cid != null ? `background:${COLOR_PALETTE[cid]?.hex};` : '';
+                if (paintedData[side]) styleStr += 'opacity:0.35;';
+                return `<div class="cube-facet-${side}"${styleStr ? ` style="${styleStr}"` : ''}></div>`;
+            }).join('');
+
+            const frontStyle = `background:${frontPalette.hex};${paintedData['front'] ? 'opacity:0.42;' : ''}`;
+            card.innerHTML = `
+                ${facetHtml}
+                <div class="cube-face-inner" style="${frontStyle}">
+                    ${isCompleted ? '<span class="cube-check">✓</span>' : ''}
+                    <span class="cube-number" style="color:${textColor}">${id}</span>
+                </div>
+            `;
+        }
 
         card.addEventListener('click', () => this.openCubeModal(id, cube));
         return card;
     }
 
-    // ── Build the large cube diagram (center face + 4 colored facets) ──
-    buildCubeVisual(id, cube, facets) {
+    // ── Build the large cube diagram – all 6 faces, each clickable to mark as painted ──
+    buildCubeVisual(id, cube, facets, painted) {
+        painted = painted || {};
+        const lightColors = new Set([0, 1, 8, 10, 11]);
+        const frontPalette = COLOR_PALETTE[cube.front] || COLOR_PALETTE[0];
+        const faceTextColor = lightColors.has(cube.front) ? 'rgba(0,0,0,0.75)' : 'white';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;width:100%;';
+
         const visual = document.createElement('div');
         visual.className = 'cube-visual';
 
-        const frontPalette = COLOR_PALETTE[cube.front] || COLOR_PALETTE[0];
-        const lightColors = new Set([0, 1, 8, 10, 11]);
-        const faceTextColor = lightColors.has(cube.front) ? 'rgba(0,0,0,0.75)' : 'white';
+        // Side facets: top, right, bottom, left, back
+        const SIDE_FACETS = [
+            { side: 'top',    bgDefault: null },
+            { side: 'right',  bgDefault: null },
+            { side: 'bottom', bgDefault: null },
+            { side: 'left',   bgDefault: null },
+            { side: 'back',   bgDefault: '#555555' },
+        ];
 
-        ['top', 'right', 'bottom', 'left'].forEach(side => {
+        SIDE_FACETS.forEach(({ side, bgDefault }) => {
             const facet = document.createElement('div');
             facet.className = `modal-facet modal-facet-${side}`;
-            const cid = facets[side];
+            facet.style.cursor = 'pointer';
+            facet.title = painted[side] ? 'צבוע ✓ – לחץ לביטול' : 'לחץ לסמן כצבוע';
+
+            const cid = side !== 'back' ? facets[side] : null;
             if (cid != null && COLOR_PALETTE[cid]) {
                 const pal = COLOR_PALETTE[cid];
                 facet.style.background = pal.hex;
                 const nc = lightColors.has(cid) ? 'rgba(0,0,0,0.72)' : 'white';
                 facet.innerHTML = `<span class="facet-code" style="color:${nc}">${cid}</span>`;
+            } else if (bgDefault) {
+                facet.style.background = bgDefault;
+                facet.innerHTML = `<span class="facet-code" style="color:rgba(255,255,255,0.5);font-size:1.2em">↩</span>`;
             }
+
+            if (painted[side]) {
+                const overlay = document.createElement('div');
+                overlay.className = 'face-painted-overlay';
+                overlay.textContent = '✓';
+                facet.appendChild(overlay);
+            }
+
+            facet.addEventListener('click', () => this.toggleFacePainted(id, side));
             visual.appendChild(facet);
         });
 
+        // Front face
         const face = document.createElement('div');
         face.className = 'modal-face';
         face.style.background = frontPalette.hex;
+        face.style.cursor = 'pointer';
+        face.title = painted['front'] ? 'צבוע ✓ – לחץ לביטול' : 'לחץ לסמן כצבוע';
         face.innerHTML = `<span class="modal-cube-number" style="color:${faceTextColor}">${id}</span>`;
+
+        if (painted['front']) {
+            const overlay = document.createElement('div');
+            overlay.className = 'face-painted-overlay';
+            overlay.textContent = '✓';
+            face.appendChild(overlay);
+        }
+
+        face.addEventListener('click', () => this.toggleFacePainted(id, 'front'));
         visual.appendChild(face);
 
-        return visual;
+        wrapper.appendChild(visual);
+
+        const hint = document.createElement('p');
+        hint.style.cssText = 'font-size:0.72em;color:#aaa;text-align:center;margin-top:5px;';
+        hint.textContent = 'לחץ על פאה לסמן כצבועה';
+        wrapper.appendChild(hint);
+
+        return wrapper;
     }
 
     // ── Build 4 rows of color-swatch pickers, one per face ──
@@ -328,6 +523,30 @@ class CubeTracker {
         return container;
     }
 
+    // ── Toggle painted state for a face and refresh ──
+    toggleFacePainted(id, side) {
+        if (!this.paintedFaces[id]) this.paintedFaces[id] = {};
+        if (this.paintedFaces[id][side]) {
+            delete this.paintedFaces[id][side];
+        } else {
+            this.paintedFaces[id][side] = true;
+        }
+        if (Object.keys(this.paintedFaces[id]).length === 0) delete this.paintedFaces[id];
+        this.saveToStorage();
+        this.renderGrid();
+        this._refreshModalFaces(id);
+    }
+
+    _refreshModalFaces(id) {
+        const facesContainer = document.querySelector('#cubeModal .cube-faces');
+        if (!facesContainer) return;
+        facesContainer.innerHTML = '';
+        const facets = this.faceColors[id] || {};
+        const painted = this.paintedFaces[id] || {};
+        facesContainer.appendChild(this.buildCubeVisual(id, this.cubes[id], facets, painted));
+        facesContainer.appendChild(this.buildFaceSelectors(id, facets));
+    }
+
     // ── Save a face-color pick and refresh the modal + map ──
     pickFaceColor(id, side, colorId) {
         if (!this.faceColors[id]) this.faceColors[id] = {};
@@ -342,13 +561,7 @@ class CubeTracker {
         this.renderGrid();   // refresh map tiles
 
         // Refresh modal faces section in-place
-        const facesContainer = document.querySelector('#cubeModal .cube-faces');
-        if (facesContainer) {
-            facesContainer.innerHTML = '';
-            const facets = this.faceColors[id] || {};
-            facesContainer.appendChild(this.buildCubeVisual(id, this.cubes[id], facets));
-            facesContainer.appendChild(this.buildFaceSelectors(id, facets));
-        }
+        this._refreshModalFaces(id);
     }
 
     createListItem(id, cube) {
@@ -392,7 +605,8 @@ class CubeTracker {
         facesContainer.innerHTML = '';
 
         const facets = this.faceColors[id] || {};
-        facesContainer.appendChild(this.buildCubeVisual(id, cube, facets));
+        const painted = this.paintedFaces[id] || {};
+        facesContainer.appendChild(this.buildCubeVisual(id, cube, facets, painted));
         facesContainer.appendChild(this.buildFaceSelectors(id, facets));
 
         document.getElementById('cubeNotes').value = this.cubNotes[id] || '';

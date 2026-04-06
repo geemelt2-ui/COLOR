@@ -384,7 +384,7 @@ main {
     padding: 30px;
     border-radius: 15px;
     width: 90%;
-    max-width: 520px;
+    max-width: 560px;
     max-height: 92vh;
     overflow-y: auto;
     position: relative;
@@ -426,50 +426,79 @@ main {
     align-items: center;
 }
 
-/* Large 3-D cube diagram shown in the modal */
+/* Large cube cross diagram shown in the modal – 6 faces */
 .cube-visual {
+    direction: ltr; /* always LTR so the cross is consistent regardless of page RTL */
     display: grid;
     grid-template-areas:
-        ". top ."
-        "left face right"
-        ". bottom .";
-    grid-template-columns: 70px 190px 70px;
-    grid-template-rows: 70px 190px 70px;
-    width: 330px;
+        ". top . ."
+        "left face right back"
+        ". bottom . .";
+    grid-template-columns: 60px 130px 60px 60px;
+    grid-template-rows: 60px 130px 60px;
+    width: 310px;
     margin: 0 auto;
 }
 
 .modal-face {
     grid-area: face;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     border: 2px solid rgba(0,0,0,0.12);
+    transition: filter 0.15s;
 }
 
+.modal-face:hover { filter: brightness(0.88); }
+
 .modal-cube-number {
-    font-size: 4.5em;
+    font-size: 3.5em;
     font-weight: 900;
     line-height: 1;
 }
 
 .modal-facet {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: #ddd;
+    transition: filter 0.15s;
 }
+
+.modal-facet:hover { filter: brightness(0.85); }
 
 .modal-facet-top    { grid-area: top;    border-radius: 10px 10px 0 0; }
 .modal-facet-right  { grid-area: right;  border-radius: 0 10px 10px 0; }
 .modal-facet-bottom { grid-area: bottom; border-radius: 0 0 10px 10px; }
 .modal-facet-left   { grid-area: left;   border-radius: 10px 0 0 10px; }
+.modal-facet-back   { grid-area: back;   border-radius: 0 10px 10px 0; }
 
 .facet-code {
-    font-size: 2em;
+    font-size: 1.8em;
     font-weight: 900;
     line-height: 1;
 }
+
+/* Painted-face overlay: white tint + green checkmark on top of the face */
+.face-painted-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.62);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4em;
+    font-weight: 900;
+    color: #27AE60;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.modal-facet .face-painted-overlay { font-size: 1.6em; }
 
 .natural-label {
     text-align: center;
@@ -593,6 +622,99 @@ main {
     font-family: inherit;
     resize: vertical;
     min-height: 80px;
+}
+
+/* 3D View */
+.view3d-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: #1a1a2e;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    perspective: 1800px;
+}
+
+.view3d-container:active { cursor: grabbing; }
+
+.world3d {
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.cube3d {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    transform-style: preserve-3d;
+}
+
+.face {
+    position: absolute;
+    border: 1px solid rgba(0,0,0,0.3);
+    backface-visibility: hidden;
+}
+
+/* Number label on the front face of 3D cubes */
+.cube3d-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Hinge approach: front at z=0, box extends to z=-21px (D=21px = 5cm on 9cm scale) */
+/* Front face */
+.face-front  { width:38px; height:38px; transform: translateZ(0.1px); }  /* position:absolute inherited from .face */
+
+/* Back face */
+.face-back   { width:38px; height:38px; transform: translateZ(-21px) rotateY(180deg); }
+
+/* Right/Left: pivot from the edge of the cube */
+.face-right  { width:21px; height:38px; left:38px;  transform-origin:0%   50%; transform: rotateY( 90deg); filter: brightness(0.85); }
+.face-left   { width:21px; height:38px; left:-21px; transform-origin:100% 50%; transform: rotateY(-90deg); filter: brightness(0.85); }
+
+/* Top/Bottom: pivot from the edge of the cube */
+.face-top    { width:38px; height:21px; top:-21px; transform-origin:50% 100%; transform: rotateX( 90deg); filter: brightness(1.18); }
+.face-bottom { width:38px; height:21px; top:38px;  transform-origin:50% 0%;   transform: rotateX(-90deg); filter: brightness(0.72); }
+
+/* Direction Toggle */
+.direction-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.direction-btn {
+    padding: 6px 14px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.direction-btn:hover { background: var(--light); }
+
+.direction-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
 }
 
 /* Responsive */
