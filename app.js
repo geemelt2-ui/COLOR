@@ -191,7 +191,7 @@ class CubeTracker {
 
         const availW = gridView.clientWidth - 8;
         const availH = gridView.clientHeight - 8;
-        const zoom = Math.min(availW / naturalW, availH / naturalH, 1);
+        const zoom = Math.min(availW / naturalW, availH / naturalH);
         map.style.zoom = zoom;
     }
 
