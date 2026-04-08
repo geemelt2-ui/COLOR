@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת מעקב צביעת קוביות</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 מערכת מעקב צביעת קוביות</h1>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">סה"כ קוביות:</span>
+                    <span class="stat-value" id="totalCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">הושלמו:</span>
+                    <span class="stat-value completed" id="completedCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">בתהליך:</span>
+                    <span class="stat-value" id="remainCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">התקדמות:</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">הכל</button>
+                <button class="filter-btn" data-filter="pending">בתהליך</button>
+                <button class="filter-btn" data-filter="completed">הושלמו</button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="חפש קובייה...">
+                </div>
+            </div>
+
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="grid">📊 גריד</button>
+                <button class="view-btn" data-view="3d">🎲 תלת-מימד</button>
+                <button class="view-btn" data-view="list">📝 רשימה</button>
+            </div>
+
+            <div class="direction-toggle" id="directionToggle">
+                <span style="font-size:0.85em;color:#666">צפייה מ:</span>
+                <button class="direction-btn active" data-dir="front">קדמי</button>
+                <button class="direction-btn" data-dir="top">למעלה ⬆</button>
+                <button class="direction-btn" data-dir="right">ימין ←</button>
+                <button class="direction-btn" data-dir="bottom">למטה ⬇</button>
+                <button class="direction-btn" data-dir="left">שמאל →</button>
+            </div>
+
+            <!-- Grid View -->
+            <div id="gridView" class="cubes-grid">
+                <!-- יוולד דינמית ב-app.js -->
+            </div>
+
+            <!-- 3D View -->
+            <div id="view3D" class="view3d-container" style="display:none"></div>
+
+            <!-- List View -->
+            <div id="listView" class="cubes-list" style="display: none;">
+                <!-- יוללד דינמית ב-app.js -->
+            </div>
+        </main>
+
+        <!-- Modal לפרטי קובייה -->
+        <div id="cubeModal" class="modal">
+            <div class="modal-content">
+                <button class="close-btn">&times;</button>
+                <div class="cube-detail">
+                    <h2>קובייה <span id="cubeNumber"></span></h2>
+                    <div class="cube-faces">
+                        <!-- יוושקמו דינמית -->
+                    </div>
+                    <div class="cube-actions">
+                        <button class="btn btn-primary" id="markCompleteBtn">סימן כהושלם</button>
+                        <button class="btn btn-secondary" id="clearBtn">ביטול סימון</button>
+                    </div>
+                    <textarea id="cubeNotes" placeholder="הערות..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+      import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAA8w4R22QD0J8kiKR4ta7XbxjCUdx0aEk",
+        authDomain: "color-cubes-f3f0c.firebaseapp.com",
+        projectId: "color-cubes-f3f0c",
+        storageBucket: "color-cubes-f3f0c.firebasestorage.app",
+        messagingSenderId: "51067026903",
+        appId: "1:51067026903:web:1b23470acbf6ab8a755f92",
+        measurementId: "G-7FLL9VVFVB"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      window.__firestore = { db, doc, getDoc, setDoc };
+
+      window.tracker = new CubeTracker();
+    </script>
+</body>
+</html>

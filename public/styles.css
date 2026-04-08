@@ -1,0 +1,747 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --color-1:  #8fc7c2;
+    --color-2:  #46a5a3;
+    --color-3:  #287980;
+    --color-4:  #174e59;
+    --color-5:  #204768;
+    --color-6:  #e55527;
+    --color-7:  #922f99;
+    --color-8:  #fddc64;
+    --color-9:  #096ab9;
+    --color-10: #5ab2e4;
+    --color-11: #90cb84;
+    --color-12: #685040;
+
+    --primary: #2C3E50;
+    --success: #27AE60;
+    --danger: #E74C3C;
+    --light: #ECF0F1;
+    --dark: #2C2034;
+    --border: #BDC3C7;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: 100vh;
+    overflow: hidden;
+    padding: 10px;
+    direction: rtl;
+}
+
+.container {
+    max-width: 100%;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    background: linear-gradient(135deg, var(--dark) 0%, #3D4E6F 100%);
+    color: white;
+    padding: 12px 30px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+header h1 {
+    font-size: 1.6em;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.stat {
+    background: rgba(255,255,255,0.1);
+    padding: 8px 12px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9em;
+    opacity: 0.9;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.4em;
+    font-weight: bold;
+}
+
+.stat-value.completed {
+    color: #27AE60;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #27AE60, #F1C40F);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* Main Content */
+main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 20px;
+}
+
+/* Filters */
+.filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.filter-btn:hover {
+    border-color: var(--primary);
+    background: var(--light);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.search-box {
+    flex: 1;
+    min-width: 200px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid var(--border);
+    border-radius: 25px;
+    font-size: 1em;
+    transition: border-color 0.3s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.view-btn {
+    padding: 10px 20px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 600;
+}
+
+.view-btn:hover {
+    background: var(--light);
+}
+
+.view-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Grid View - zoomed to fit window */
+.cubes-grid {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Inner positioned map */
+.cube-map {
+    position: relative;
+    margin: 16px;
+}
+
+/* Individual cube tile – uses CSS grid to embed colored facets */
+.cube-card {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    grid-template-areas:
+        ". top ."
+        "left face right"
+        ". bottom .";
+    grid-template-columns: 5px 1fr 5px;
+    grid-template-rows: 5px 1fr 5px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(0, 0, 0, 0.22);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+    overflow: hidden;
+}
+
+.cube-card:hover {
+    transform: scale(1.4);
+    z-index: 20;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    border-color: white;
+}
+
+.cube-card.completed {
+    opacity: 0.55;
+    border-color: #27AE60;
+    border-width: 2.5px;
+}
+
+.cube-card.pending {
+    opacity: 1;
+}
+
+/* Colored facet strips inside the map tile */
+.cube-facet-top    { grid-area: top; }
+.cube-facet-right  { grid-area: right; }
+.cube-facet-bottom { grid-area: bottom; }
+.cube-facet-left   { grid-area: left; }
+
+/* Center face inside the map tile */
+.cube-face-inner {
+    grid-area: face;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.cube-number {
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1;
+    user-select: none;
+}
+
+.cube-check {
+    font-size: 8px;
+    font-weight: bold;
+    color: #27AE60;
+    text-shadow: 0 0 3px rgba(255,255,255,0.9);
+    line-height: 1;
+}
+
+.color-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.2);
+}
+
+/* List View */
+.cubes-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.list-item {
+    display: grid;
+    grid-template-columns: 50px 1fr auto 150px;
+    gap: 15px;
+    align-items: center;
+    padding: 15px;
+    background: var(--light);
+    border-radius: 8px;
+    border-right: 5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.list-item:hover {
+    background: #D5DBDB;
+    transform: translateX(-5px);
+}
+
+.list-item.completed {
+    background: #D5F4E6;
+    border-right-color: #27AE60;
+}
+
+.list-number {
+    font-size: 1.3em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.list-colors {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.list-faces {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.list-face-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.15);
+}
+
+.list-status {
+    font-weight: bold;
+}
+
+.list-status.pending  { color: var(--danger); }
+.list-status.completed { color: var(--success); }
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+    animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 560px;
+    max-height: 92vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideIn 0.3s;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 2em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary);
+}
+
+.cube-detail h2 {
+    margin-bottom: 20px;
+    color: var(--primary);
+}
+
+/* Cube faces container in modal */
+.cube-faces {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Large cube cross diagram shown in the modal – 6 faces */
+.cube-visual {
+    direction: ltr; /* always LTR so the cross is consistent regardless of page RTL */
+    display: grid;
+    grid-template-areas:
+        ". top . ."
+        "left face right back"
+        ". bottom . .";
+    grid-template-columns: 60px 130px 60px 60px;
+    grid-template-rows: 60px 130px 60px;
+    width: 310px;
+    margin: 0 auto;
+}
+
+.modal-face {
+    grid-area: face;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(0,0,0,0.12);
+    transition: filter 0.15s;
+}
+
+.modal-face:hover { filter: brightness(0.88); }
+
+.modal-cube-number {
+    font-size: 3.5em;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.modal-facet {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ddd;
+    transition: filter 0.15s;
+}
+
+.modal-facet:hover { filter: brightness(0.85); }
+
+.modal-facet-top    { grid-area: top;    border-radius: 10px 10px 0 0; }
+.modal-facet-right  { grid-area: right;  border-radius: 0 10px 10px 0; }
+.modal-facet-bottom { grid-area: bottom; border-radius: 0 0 10px 10px; }
+.modal-facet-left   { grid-area: left;   border-radius: 10px 0 0 10px; }
+.modal-facet-back   { grid-area: back;   border-radius: 0 10px 10px 0; }
+
+.facet-code {
+    font-size: 1.8em;
+    font-weight: 900;
+    line-height: 1;
+}
+
+/* Painted-face overlay: white tint + green checkmark on top of the face */
+.face-painted-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.62);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.4em;
+    font-weight: 900;
+    color: #27AE60;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.modal-facet .face-painted-overlay { font-size: 1.6em; }
+
+.natural-label {
+    text-align: center;
+    font-size: 0.9em;
+    color: #888;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* Face color selector rows */
+.face-selectors {
+    width: 100%;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.face-selector-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    direction: rtl;
+}
+
+.face-label {
+    font-size: 0.8em;
+    font-weight: 700;
+    min-width: 68px;
+    color: var(--primary);
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.face-swatches {
+    display: flex;
+    gap: 3px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+.face-swatches::-webkit-scrollbar { display: none; }
+
+.color-swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 900;
+    border: 2px solid transparent;
+    transition: transform 0.12s, box-shadow 0.12s;
+    flex-shrink: 0;
+    user-select: none;
+    position: relative;
+}
+
+.color-swatch:hover {
+    transform: scale(1.3);
+    z-index: 5;
+}
+
+.swatch-active {
+    border-color: #111 !important;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px #111;
+    transform: scale(1.18) !important;
+}
+
+.swatch-none {
+    background: #ebebeb;
+    color: #bbb;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cube-actions {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1em;
+}
+
+.btn-primary {
+    background: var(--success);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #229954;
+    transform: scale(1.05);
+}
+
+.btn-secondary {
+    background: var(--border);
+    color: var(--primary);
+}
+
+.btn-secondary:hover {
+    background: #A6ACAF;
+}
+
+#cubeNotes {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* 3D View */
+.view3d-container {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: #1a1a2e;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    perspective: 1800px;
+}
+
+.view3d-container:active { cursor: grabbing; }
+
+.world3d {
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.cube3d {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    transform-style: preserve-3d;
+}
+
+.face {
+    position: absolute;
+    border: 1px solid rgba(0,0,0,0.3);
+    backface-visibility: hidden;
+}
+
+/* Number label on the front face of 3D cubes */
+.cube3d-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Hinge approach: front at z=0, box extends to z=-21px (D=21px = 5cm on 9cm scale) */
+/* Front face */
+.face-front  { width:38px; height:38px; transform: translateZ(0.1px); }  /* position:absolute inherited from .face */
+
+/* Back face */
+.face-back   { width:38px; height:38px; transform: translateZ(-21px) rotateY(180deg); }
+
+/* Right/Left: pivot from the edge of the cube */
+.face-right  { width:21px; height:38px; left:38px;  transform-origin:0%   50%; transform: rotateY( 90deg); filter: brightness(0.85); }
+.face-left   { width:21px; height:38px; left:-21px; transform-origin:100% 50%; transform: rotateY(-90deg); filter: brightness(0.85); }
+
+/* Top/Bottom: pivot from the edge of the cube */
+.face-top    { width:38px; height:21px; top:-21px; transform-origin:50% 100%; transform: rotateX( 90deg); filter: brightness(1.18); }
+.face-bottom { width:38px; height:21px; top:38px;  transform-origin:50% 0%;   transform: rotateX(-90deg); filter: brightness(0.72); }
+
+/* Direction Toggle */
+.direction-toggle {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.direction-btn {
+    padding: 6px 14px;
+    border: 2px solid var(--border);
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.direction-btn:hover { background: var(--light); }
+
+.direction-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .list-item {
+        grid-template-columns: 50px 1fr auto;
+    }
+
+    header h1 {
+        font-size: 1.8em;
+    }
+
+    .stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .cubes-grid {
+        min-height: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .filters {
+        flex-direction: column;
+    }
+
+    .search-box {
+        min-width: 100%;
+    }
+}
